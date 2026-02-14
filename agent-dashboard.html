@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Dashboard | Gaming Coin Hub</title>
+    <meta name="robots" content="noindex, nofollow">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glass-panel:hover { border-color: rgba(255, 255, 255, 0.12); }
+        .notice-info { border-left-color: rgb(59, 130, 246); background: rgba(59, 130, 246, 0.08); }
+        .notice-warning { border-left-color: rgb(245, 158, 11); background: rgba(245, 158, 11, 0.08); }
+        .notice-urgent { border-left-color: rgb(239, 68, 68); background: rgba(239, 68, 68, 0.08); }
+        .agent-grid-bg { background-size: 32px 32px; background-image: linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px); }
+        .agent-glow { background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(250,204,21,0.15), transparent 50%); }
+        .balance-card { position: relative; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+        .balance-card:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -12px rgba(0,0,0,0.4); }
+        .balance-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+        .balance-total::before { background: linear-gradient(90deg, #facc15, #f59e0b); }
+        .balance-chime::before { background: linear-gradient(90deg, #34d399, #10b981); }
+        .balance-crypto::before { background: linear-gradient(90deg, #60a5fa, #3b82f6); }
+        .card-shine { position: relative; overflow: hidden; }
+        .card-shine::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent); transition: left 0.5s; }
+        .card-shine:hover::after { left: 100%; }
+        .btn-purchase { background: linear-gradient(135deg, #facc15 0%, #f59e0b 100%); box-shadow: 0 4px 14px rgba(250,204,21,0.35); transition: all 0.2s; }
+        .btn-purchase:hover { box-shadow: 0 6px 20px rgba(250,204,21,0.45); transform: translateY(-1px); }
+        .agent-tab.text-yellow-400 { background: rgba(250,204,21,0.1); color: rgb(250,204,21); padding: 0.375rem 0.75rem; border-radius: 0.5rem; }
+    </style>
+</head>
+<body class="bg-[#0E0E11] text-slate-400 antialiased selection:bg-yellow-400/20 selection:text-yellow-400 min-h-screen relative">
+    <div class="fixed inset-0 agent-grid-bg agent-glow pointer-events-none z-0"></div>
+    <script>window.CURRENT_PAGE = 'agent';</script>
+    <script src="js/site-data.js"></script>
+    <script src="js/agent-data.js"></script>
+    <script src="js/admin-data.js"></script>
+    <script src="js/payment-api-bridge.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@otplib/preset-browser@12.0.1/buffer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@otplib/preset-browser@12.0.1/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- Nav -->
+    <nav class="fixed top-0 left-0 right-0 z-50 h-16 border-b border-white/5 bg-[#0E0E11]/95 backdrop-blur-xl flex items-center px-4 sm:px-6">
+        <a href="index.html" class="flex items-center gap-2.5 min-w-0 shrink-0">
+            <img src="images/gaming-coinhub-logo.png" alt="Gaming Coin Hub" class="h-9 object-contain">
+            <span class="text-white font-semibold truncate hidden sm:inline">Agent Dashboard</span>
+        </a>
+        <div class="flex-1 min-w-0"></div>
+        <div class="flex items-center gap-2 sm:gap-4 flex-wrap justify-end shrink-0">
+            <a href="#dashboard" class="agent-tab text-xs sm:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap" data-panel="dashboard">Dashboard</a>
+            <a href="#api" class="agent-tab text-xs sm:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap" data-panel="api">API</a>
+            <a href="#games" class="agent-tab text-xs sm:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap" data-panel="games">My Games</a>
+            <a href="#settings" class="agent-tab text-xs sm:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap" data-panel="settings">Settings</a>
+            <a href="#rates" class="agent-tab text-xs sm:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap" data-panel="rates">Rates</a>
+            <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-400/10 to-amber-500/5 border border-yellow-400/20">
+                <iconify-icon icon="solar:wallet-money-linear" class="text-yellow-400 text-lg"></iconify-icon>
+                <span class="text-slate-400 text-sm">Balance</span>
+                <span id="nav-balance" class="text-yellow-400 font-bold">$0.00</span>
+            </div>
+            <button id="logout-btn" class="text-sm text-slate-400 hover:text-white transition-colors">Logout</button>
+        </div>
+    </nav>
+
+    <main class="pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto space-y-6">
+            <!-- Notices (populated by JS) -->
+            <div id="agent-notices" class="space-y-3 relative z-10"></div>
+
+            <!-- Dashboard panel -->
+            <div id="panel-dashboard" class="space-y-6 relative z-10">
+            <!-- Balance cards row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="glass-panel balance-card balance-total rounded-2xl p-6 card-shine">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="w-10 h-10 rounded-xl bg-yellow-400/20 flex items-center justify-center mb-3">
+                                <iconify-icon icon="solar:wallet-money-linear" class="text-yellow-400 text-xl"></iconify-icon>
+                            </div>
+                            <p class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Total Balance</p>
+                            <p id="balance-amount" class="text-3xl font-bold bg-gradient-to-r from-yellow-200 to-amber-400 bg-clip-text text-transparent">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-panel balance-card balance-chime rounded-2xl p-6 card-shine">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-3">
+                                <iconify-icon icon="solar:card-linear" class="text-emerald-400 text-xl"></iconify-icon>
+                            </div>
+                            <p class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Chime</p>
+                            <p id="balance-chime" class="text-2xl font-bold text-white">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-panel balance-card balance-crypto rounded-2xl p-6 card-shine">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center mb-3">
+                                <iconify-icon icon="solar:bitcoin-linear" class="text-blue-400 text-xl"></iconify-icon>
+                            </div>
+                            <p class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Crypto</p>
+                            <p id="balance-crypto" class="text-2xl font-bold text-white">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main content: Purchase form + Graph -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Buy Coins form -->
+                <div class="glass-panel rounded-2xl p-6 order-2 lg:order-1 card-shine border-yellow-400/10">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-12 h-12 rounded-xl bg-yellow-400/20 flex items-center justify-center">
+                            <iconify-icon icon="solar:cart-large-2-linear" class="text-yellow-400 text-2xl"></iconify-icon>
+                        </div>
+                        <h2 class="text-xl font-bold text-white">Buy Gaming Coins</h2>
+                    </div>
+                    <form id="buy-form" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1.5">Game</label>
+                                <select id="buy-game" required class="w-full px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-yellow-400/50 outline-none"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1.5">Tier</label>
+                                <select id="buy-tier" required class="w-full px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-yellow-400/50 outline-none">
+                                    <option value="distributor">Distributor</option>
+                                    <option value="subdistributor">Sub-distributor</option>
+                                    <option value="store">Store</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1.5">Game username</label>
+                            <select id="buy-username" required class="w-full px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-yellow-400/50 outline-none">
+                                <option value="">— Select or add new —</option>
+                            </select>
+                            <input type="text" id="buy-username-new" placeholder="Enter new username" class="w-full mt-2 px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-yellow-400/50 outline-none hidden">
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1.5">Coins</label>
+                                <input type="number" id="buy-coins" min="1" placeholder="Amount" required class="w-full px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-yellow-400/50 outline-none" value="">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-500 mb-1.5">Pay with</label>
+                                <select id="buy-payment-method" class="w-full px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-yellow-400/50 outline-none">
+                                    <option value="chime">Chime balance</option>
+                                    <option value="crypto">Crypto balance (10% off)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="pt-3 pb-1 flex items-end justify-between gap-4">
+                            <div>
+                                <p class="text-xs text-slate-500">Total</p>
+                                <p id="buy-total" class="text-xl font-bold text-yellow-400">$0.00</p>
+                                <p id="buy-discount-note" class="text-xs text-green-400/80 mt-1 hidden"></p>
+                                <p id="buy-low-balance" class="text-xs text-red-400 mt-1 hidden"></p>
+                            </div>
+                            <button type="submit" id="buy-btn" class="btn-purchase px-8 py-2.5 text-[#0E0E11] rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shrink-0 flex items-center gap-2"><iconify-icon icon="solar:cart-large-2-linear"></iconify-icon> Purchase</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Purchase overview graph -->
+                <div class="glass-panel rounded-2xl p-6 order-1 lg:order-2 card-shine">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-yellow-400/20 flex items-center justify-center">
+                            <iconify-icon icon="solar:chart-2-linear" class="text-yellow-400 text-xl"></iconify-icon>
+                        </div>
+                        <h2 class="text-xl font-bold text-white">Purchase Overview</h2>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 mb-4">
+                        <input type="date" id="graph-from" class="px-2.5 py-1.5 rounded bg-white/5 border border-white/10 text-white text-xs focus:border-yellow-400/50 outline-none">
+                        <input type="date" id="graph-to" class="px-2.5 py-1.5 rounded bg-white/5 border border-white/10 text-white text-xs focus:border-yellow-400/50 outline-none">
+                        <div class="flex gap-1">
+                            <button type="button" id="graph-preset-7" class="px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-yellow-400/20 hover:text-yellow-400 text-slate-400 transition-colors">7d</button>
+                            <button type="button" id="graph-preset-30" class="px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-yellow-400/20 hover:text-yellow-400 text-slate-400 transition-colors">30d</button>
+                            <button type="button" id="graph-preset-90" class="px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-yellow-400/20 hover:text-yellow-400 text-slate-400 transition-colors">90d</button>
+                            <button type="button" id="graph-preset-365" class="px-3 py-1.5 text-xs rounded-lg bg-white/5 hover:bg-yellow-400/20 hover:text-yellow-400 text-slate-400 transition-colors">12mo</button>
+                        </div>
+                        <span id="monthly-graph-legend" class="text-xs text-slate-500 ml-auto"></span>
+                    </div>
+                    <div id="monthly-graph" class="h-48 w-full" role="img" aria-label="Purchase line graph"></div>
+                </div>
+            </div>
+
+            <!-- API Documentation -->
+            <div id="panel-api" class="hidden relative z-10">
+                <div class="glass-panel rounded-2xl overflow-hidden card-shine">
+                    <div class="px-6 py-4 border-b border-white/10 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-yellow-400/20 flex items-center justify-center shrink-0">
+                            <iconify-icon icon="solar:document-code-linear" class="text-yellow-400 text-xl"></iconify-icon>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-white">API Documentation</h2>
+                            <p class="text-slate-500 text-sm">Download API docs for integration.</p>
+                        </div>
+                    </div>
+                    <div id="agent-api-docs-list" class="p-6 space-y-4">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div id="agent-api-docs-empty" class="hidden p-12 text-center text-slate-500">
+                        <iconify-icon icon="solar:document-code-linear" width="48" class="mx-auto mb-4 opacity-50"></iconify-icon>
+                        <p>No API documentation available yet. Contact admin.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Games (Game + Username tier lookup + remaining games) -->
+            <div id="panel-games" class="hidden relative z-10 space-y-6">
+                <div class="glass-panel rounded-2xl overflow-hidden card-shine">
+                    <div class="px-6 py-4 border-b border-white/10 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center shrink-0">
+                            <iconify-icon icon="solar:gamepad-2-linear" class="text-green-400 text-xl"></iconify-icon>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-white">Your Loaded Games</h2>
+                            <p class="text-slate-500 text-sm">Games you have purchased with username and tier.</p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto max-h-64 overflow-y-auto">
+                        <table class="w-full text-sm">
+                            <thead class="sticky top-0 bg-[#0A0A0C]/95">
+                                <tr class="border-b border-white/10">
+                                    <th class="px-6 py-3 text-left text-slate-500 text-xs font-medium">Game</th>
+                                    <th class="px-6 py-3 text-left text-slate-500 text-xs font-medium">Username</th>
+                                    <th class="px-6 py-3 text-left text-slate-500 text-xs font-medium">Tier</th>
+                                </tr>
+                            </thead>
+                            <tbody id="games-tiers-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="glass-panel rounded-2xl overflow-hidden card-shine">
+                    <div class="px-6 py-4 border-b border-white/10 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-slate-500/20 flex items-center justify-center shrink-0">
+                            <iconify-icon icon="solar:widget-5-linear" class="text-slate-400 text-xl"></iconify-icon>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-white">Remaining Games</h2>
+                            <p class="text-slate-500 text-sm">Games available for you to load. Use the Buy Coins form to add usernames.</p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto max-h-64 overflow-y-auto">
+                        <table class="w-full text-sm">
+                            <thead class="sticky top-0 bg-[#0A0A0C]/95">
+                                <tr class="border-b border-white/10">
+                                    <th class="px-6 py-3 text-left text-slate-500 text-xs font-medium">Game</th>
+                                    <th class="px-6 py-3 text-left text-slate-500 text-xs font-medium">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="games-remaining-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rates (Agent's pricing - custom or default) -->
+            <div id="panel-rates" class="hidden relative z-10">
+                <div class="glass-panel rounded-2xl overflow-hidden card-shine">
+                    <div class="px-6 py-4 border-b border-white/10 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-yellow-400/20 flex items-center justify-center shrink-0">
+                            <iconify-icon icon="solar:tag-price-linear" class="text-yellow-400 text-xl"></iconify-icon>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-white">Your Rates</h2>
+                            <p class="text-slate-500 text-sm">Pricing per game and tier. Admin-custom rates or default rates.</p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto max-h-[28rem] overflow-y-auto">
+                        <table class="w-full text-sm">
+                            <thead class="sticky top-0 bg-[#0A0A0C]/95">
+                                <tr class="border-b border-white/10">
+                                    <th class="px-6 py-3 text-left text-slate-500 text-xs font-medium">Game</th>
+                                    <th class="px-6 py-3 text-left text-slate-500 text-xs font-medium">Distributor</th>
+                                    <th class="px-6 py-3 text-left text-slate-500 text-xs font-medium">Sub-distributor</th>
+                                    <th class="px-6 py-3 text-left text-slate-500 text-xs font-medium">Store</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agent-rates-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div id="panel-settings" class="hidden relative z-10 space-y-6">
+                <div class="glass-panel rounded-2xl p-6 max-w-md card-shine">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-10 h-10 rounded-xl bg-yellow-400/20 flex items-center justify-center">
+                            <iconify-icon icon="solar:settings-linear" class="text-yellow-400 text-xl"></iconify-icon>
+                        </div>
+                        <h2 class="text-xl font-bold text-white">Settings</h2>
+                    </div>
+                    <form id="settings-password-form" class="space-y-4">
+                        <h3 class="text-white font-medium text-sm">Change Password</h3>
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1.5">Current password</label>
+                            <input type="password" id="settings-current-pw" required class="w-full px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-yellow-400/50 outline-none" placeholder="••••••••">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1.5">New password</label>
+                            <input type="password" id="settings-new-pw" required minlength="6" class="w-full px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-yellow-400/50 outline-none" placeholder="••••••••">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1.5">Confirm new password</label>
+                            <input type="password" id="settings-confirm-pw" required minlength="6" class="w-full px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-yellow-400/50 outline-none" placeholder="••••••••">
+                        </div>
+                        <p id="settings-msg" class="text-sm hidden"></p>
+                        <button type="submit" class="btn-purchase px-6 py-2.5 text-[#0E0E11] rounded-xl font-bold flex items-center gap-2"><iconify-icon icon="solar:lock-password-linear"></iconify-icon> Reset Password</button>
+                    </form>
+                </div>
+                <!-- 2FA Section -->
+                <div class="glass-panel rounded-2xl p-6 max-w-md card-shine">
+                    <h3 class="text-white font-medium text-sm mb-2 flex items-center gap-2">
+                        <iconify-icon icon="solar:shield-check-linear" class="text-yellow-400"></iconify-icon>
+                        Two-Factor Authentication (2FA)
+                    </h3>
+                    <p class="text-slate-500 text-xs mb-4">Add an extra layer of security with Google Authenticator.</p>
+                    <div id="2fa-status" class="mb-4">
+                        <p id="2fa-enabled-msg" class="hidden text-green-400 text-sm flex items-center gap-2"><iconify-icon icon="solar:shield-check-linear"></iconify-icon> 2FA is enabled for your account.</p>
+                        <p id="2fa-disabled-msg" class="text-slate-400 text-sm">2FA is not enabled.</p>
+                    </div>
+                    <div id="2fa-setup" class="hidden space-y-4">
+                        <p class="text-slate-400 text-xs">Scan this QR code with Google Authenticator or enter the secret manually:</p>
+                        <div id="2fa-qr-container" class="inline-block p-4 rounded-lg bg-white"></div>
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1.5">Secret key</label>
+                            <input type="text" id="2fa-secret" readonly class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 text-xs font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1.5">Enter 6-digit code to verify</label>
+                            <input type="text" id="2fa-verify-code" maxlength="6" pattern="[0-9]*" inputmode="numeric" placeholder="000000" class="w-full px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-yellow-400/50 outline-none font-mono tracking-widest">
+                        </div>
+                        <p id="2fa-setup-msg" class="text-sm hidden"></p>
+                        <div class="flex gap-2">
+                            <button type="button" id="2fa-confirm-btn" class="px-4 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold text-sm hover:bg-yellow-300 transition-colors">Enable 2FA</button>
+                            <button type="button" id="2fa-cancel-btn" class="px-4 py-2 bg-white/5 text-slate-400 rounded-lg text-sm hover:bg-white/10 transition-colors">Cancel</button>
+                        </div>
+                    </div>
+                    <div id="2fa-actions">
+                        <button type="button" id="2fa-enable-btn" class="hidden px-4 py-2 bg-white/5 border border-white/10 text-white rounded-lg text-sm hover:bg-white/10 transition-colors flex items-center gap-2"><iconify-icon icon="solar:shield-plus-linear"></iconify-icon> Enable 2FA</button>
+                        <button type="button" id="2fa-disable-btn" class="hidden px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-sm hover:bg-red-500/30 transition-colors flex items-center gap-2"><iconify-icon icon="solar:shield-cross-linear"></iconify-icon> Disable 2FA</button>
+                    </div>
+                    <p id="2fa-msg" class="text-sm hidden mt-2"></p>
+                </div>
+            </div>
+
+            <!-- Transaction history -->
+            <div class="glass-panel rounded-2xl overflow-hidden card-shine">
+                <div class="px-6 py-4 border-b border-white/10 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-yellow-400/20 flex items-center justify-center">
+                        <iconify-icon icon="solar:history-linear" class="text-yellow-400 text-xl"></iconify-icon>
+                    </div>
+                    <h2 class="text-xl font-bold text-white">Transaction History</h2>
+                </div>
+                <div class="overflow-x-auto max-h-72 overflow-y-auto">
+                    <table class="w-full text-sm">
+                        <thead class="sticky top-0 bg-[#0E0E11]/98 backdrop-blur">
+                            <tr class="border-b border-white/10">
+                                <th class="px-6 py-3 text-left text-slate-500 text-xs font-medium">Time</th>
+                                <th class="px-6 py-3 text-left text-slate-500 text-xs font-medium">Type</th>
+                                <th class="px-6 py-3 text-left text-slate-500 text-xs font-medium">Details</th>
+                                <th class="px-6 py-3 text-right text-slate-500 text-xs font-medium">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tx-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            </div>
+            <!-- end panel-dashboard -->
+        </div>
+    </main>
+
+    <script src="js/layout.js"></script>
+    <script src="js/agent-dashboard.js"></script>
+</body>
+</html>

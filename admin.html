@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Gaming Coin Hub</title>
+    <meta name="robots" content="noindex, nofollow">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .grid-bg { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+        .sidebar-link.active { background: rgba(250, 204, 21, 0.1); border-left-color: rgb(250, 204, 21); color: rgb(250, 204, 21); }
+        @media (max-width: 1023px) { #admin-sidebar { transform: translateX(-100%); transition: transform 0.2s; } #admin-sidebar.open { transform: translateX(0); } }
+    </style>
+</head>
+<body class="bg-[#0E0E11] text-slate-400 antialiased selection:bg-yellow-400/20 selection:text-yellow-400">
+    <script>window.CURRENT_PAGE = 'admin';</script>
+    <script src="js/site-data.js"></script>
+    <script src="js/games-data.js"></script>
+    <script src="js/agent-data.js"></script>
+    <script src="js/admin-data.js"></script>
+    <script>
+        const SHEET_SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
+        const ADMIN_STORAGE_KEY = 'gch_admin_auth';
+        const ADMIN_PW_KEY = 'gch_admin_pw';
+        const ADMIN_ID = 'admin';
+        const ADMIN_PASSWORD = 'GCH2025';
+    </script>
+
+    <!-- Login Section -->
+    <div id="login-section" class="fixed inset-0 z-50 flex items-center justify-center bg-[#0E0E11]">
+        <div class="absolute inset-0 grid-bg pointer-events-none opacity-50"></div>
+        <div class="glass-panel rounded-2xl p-8 max-w-md w-full mx-4 relative z-10">
+            <h1 class="text-2xl font-bold text-white mb-2">Admin Login</h1>
+            <p class="text-slate-400 text-sm mb-6">Enter your admin ID and password.</p>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="adminId" class="block text-sm font-medium text-slate-300 mb-2">Admin ID</label>
+                    <input type="text" id="adminId" name="adminId" required class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none" placeholder="admin">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                    <input type="password" id="password" name="password" required class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none" placeholder="••••••••">
+                </div>
+                <div id="login-message" class="hidden py-3 px-4 rounded-lg text-sm"></div>
+                <button type="submit" id="login-btn" class="w-full py-3 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300 transition-colors">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard (hidden until login) -->
+    <div id="dashboard" class="hidden min-h-screen">
+        <div id="toast" class="fixed top-20 right-6 z-50 px-4 py-3 rounded-lg text-sm hidden bg-green-500/20 text-green-400 border border-green-500/30"></div>
+        <nav class="fixed top-0 left-0 right-0 z-40 h-16 border-b border-white/5 bg-[#0E0E11]/95 backdrop-blur-xl flex items-center px-4 sm:px-6">
+            <button id="admin-sidebar-toggle" type="button" class="lg:hidden p-2 -ml-2 mr-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5" aria-label="Toggle menu"><iconify-icon icon="solar:hamburger-menu-linear" width="24"></iconify-icon></button>
+            <a href="index.html" class="flex items-center gap-2.5 min-w-0">
+                <img src="images/gaming-coinhub-logo.png" alt="Gaming Coin Hub" class="h-9 object-contain shrink-0">
+                <span class="text-white font-bold truncate hidden sm:block">Admin Dashboard</span>
+            </a>
+            <div class="flex-1"></div>
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+                <a href="index.html" target="_blank" class="text-sm text-slate-400 hover:text-white flex items-center gap-1">
+                    <iconify-icon icon="solar:link-square-linear"></iconify-icon> View Site
+                </a>
+                <button id="export-btn" class="hidden sm:block px-4 py-2 text-sm bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 text-slate-300 hover:text-white transition-colors">Export Config</button>
+                <button id="reset-btn" class="hidden sm:block px-4 py-2 text-sm text-red-400 hover:text-red-300 border border-red-500/30 hover:border-red-400/50 rounded-lg transition-colors">Reset to Default</button>
+                <button id="logout-btn" class="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">Logout</button>
+            </div>
+        </nav>
+
+        <div id="admin-sidebar-backdrop" class="fixed inset-0 bg-black/60 z-30 hidden lg:hidden" aria-hidden="true"></div>
+        <aside id="admin-sidebar" class="fixed left-0 top-16 bottom-0 w-64 border-r border-white/5 bg-[#0A0A0C]/95 overflow-y-auto z-30 lg:z-auto">
+            <nav class="p-4 space-y-1">
+                <a href="#overview" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="overview">
+                    <iconify-icon icon="solar:chart-2-linear" width="20"></iconify-icon> Overview
+                </a>
+                <a href="#games" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="games">
+                    <iconify-icon icon="solar:gamepad-linear" width="20"></iconify-icon> Games & Links
+                </a>
+                <a href="#game-rates" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="game-rates">
+                    <iconify-icon icon="solar:wallet-money-linear" width="20"></iconify-icon> Game and Agents Link
+                </a>
+                <a href="#agents" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="agents">
+                    <iconify-icon icon="solar:users-group-rounded-linear" width="20"></iconify-icon> Agents & Rates
+                </a>
+                <a href="#notices" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="notices">
+                    <iconify-icon icon="solar:bell-linear" width="20"></iconify-icon> Agent Notices
+                </a>
+                <a href="#api-docs" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="api-docs">
+                    <iconify-icon icon="solar:code-square-linear" width="20"></iconify-icon> API Documentation
+                </a>
+                <a href="#navigation" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="navigation">
+                    <iconify-icon icon="solar:menu-dots-linear" width="20"></iconify-icon> Navigation
+                </a>
+                <a href="#services" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="services">
+                    <iconify-icon icon="solar:widget-2-linear" width="20"></iconify-icon> Services
+                </a>
+                <a href="#demo-uis" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="demo-uis">
+                    <iconify-icon icon="solar:gallery-minimalistic-linear" width="20"></iconify-icon> Demo UIs
+                </a>
+                <a href="#platform-orders" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="platform-orders">
+                    <iconify-icon icon="solar:cart-large-2-linear" width="20"></iconify-icon> Platform Orders
+                </a>
+                <a href="#packages" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="packages">
+                    <iconify-icon icon="solar:box-linear" width="20"></iconify-icon> Packages
+                </a>
+                <a href="#marketplace" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="marketplace">
+                    <iconify-icon icon="solar:cart-large-2-linear" width="20"></iconify-icon> Marketplace
+                </a>
+                <a href="#features" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="features">
+                    <iconify-icon icon="solar:star-linear" width="20"></iconify-icon> Features
+                </a>
+                <a href="#marquee" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="marquee">
+                    <iconify-icon icon="solar:gallery-linear" width="20"></iconify-icon> Marquee Games
+                </a>
+                <a href="#blogs" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="blogs">
+                    <iconify-icon icon="solar:document-text-linear" width="20"></iconify-icon> Blogs & PDFs
+                </a>
+                <a href="#contact" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg border-l-2 border-transparent text-slate-400 hover:bg-white/5 hover:text-white transition-colors" data-panel="contact">
+                    <iconify-icon icon="solar:phone-linear" width="20"></iconify-icon> Contact Info
+                </a>
+            </nav>
+        </aside>
+
+        <main class="lg:pl-64 pt-16 min-h-screen">
+            <div class="p-4 sm:p-6 lg:p-8 max-w-4xl">
+                <!-- Overview -->
+                <section id="panel-overview" class="panel">
+                    <h1 class="text-2xl font-bold text-white mb-2">Overview</h1>
+                    <p class="text-slate-400 mb-6">Manage your entire website from this dashboard. Edits are saved to your browser and applied immediately across the site.</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                        <div class="glass-panel rounded-xl p-4">
+                            <div class="text-2xl font-bold text-white" id="stat-games">0</div>
+                            <div class="text-xs text-slate-500">Games</div>
+                        </div>
+                        <div class="glass-panel rounded-xl p-4">
+                            <div class="text-2xl font-bold text-white" id="stat-nav">0</div>
+                            <div class="text-xs text-slate-500">Nav Links</div>
+                        </div>
+                        <div class="glass-panel rounded-xl p-4">
+                            <div class="text-2xl font-bold text-white" id="stat-services">0</div>
+                            <div class="text-xs text-slate-500">Services</div>
+                        </div>
+                        <div class="glass-panel rounded-xl p-4">
+                            <div class="text-2xl font-bold text-yellow-400" id="stat-overrides">—</div>
+                            <div class="text-xs text-slate-500">Custom Data</div>
+                        </div>
+                    </div>
+                    <!-- Agent Purchases Graph -->
+                    <div class="glass-panel rounded-xl p-6 mb-6">
+                        <h3 class="text-white font-semibold mb-4">Agent Purchases</h3>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <label class="text-sm text-slate-400">From</label>
+                                <input type="date" id="admin-graph-from" class="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-yellow-400/50 outline-none">
+                                <label class="text-sm text-slate-400">To</label>
+                                <input type="date" id="admin-graph-to" class="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-yellow-400/50 outline-none">
+                                <div class="flex gap-1">
+                                    <button type="button" id="admin-graph-preset-7" class="px-2 py-1 text-xs rounded bg-white/5 hover:bg-white/10 text-slate-400">7d</button>
+                                    <button type="button" id="admin-graph-preset-30" class="px-2 py-1 text-xs rounded bg-white/5 hover:bg-white/10 text-slate-400">30d</button>
+                                    <button type="button" id="admin-graph-preset-90" class="px-2 py-1 text-xs rounded bg-white/5 hover:bg-white/10 text-slate-400">90d</button>
+                                    <button type="button" id="admin-graph-preset-365" class="px-2 py-1 text-xs rounded bg-white/5 hover:bg-white/10 text-slate-400">12mo</button>
+                                </div>
+                            </div>
+                            <div id="admin-graph-legend" class="text-xs text-slate-500"></div>
+                        </div>
+                        <div id="admin-graph" class="h-52 w-full" role="img" aria-label="Agent purchase line graph"></div>
+                    </div>
+                    <div class="glass-panel rounded-xl p-6">
+                        <h3 class="text-white font-semibold mb-3">Quick Links</h3>
+                        <div class="flex flex-wrap gap-3">
+                            <a href="index.html" target="_blank" class="px-4 py-2 bg-yellow-400/20 text-yellow-400 rounded-lg text-sm hover:bg-yellow-400/30">Home</a>
+                            <a href="api.html" target="_blank" class="px-4 py-2 bg-white/5 text-slate-300 rounded-lg text-sm hover:bg-white/10">API</a>
+                            <a href="gaming-coins.html" target="_blank" class="px-4 py-2 bg-white/5 text-slate-300 rounded-lg text-sm hover:bg-white/10">Gaming Coins</a>
+                            <a href="game-rates.html" target="_blank" class="px-4 py-2 bg-white/5 text-slate-300 rounded-lg text-sm hover:bg-white/10">Links</a>
+                            <a href="blog.html" target="_blank" class="px-4 py-2 bg-white/5 text-slate-300 rounded-lg text-sm hover:bg-white/10">Blog</a>
+                            <a href="contact.html" target="_blank" class="px-4 py-2 bg-white/5 text-slate-300 rounded-lg text-sm hover:bg-white/10">Contact</a>
+                            <a href="agent-signup.html" target="_blank" class="px-4 py-2 bg-white/5 text-slate-300 rounded-lg text-sm hover:bg-white/10">Agent Sign Up</a>
+                            <a href="agent-login.html" target="_blank" class="px-4 py-2 bg-white/5 text-slate-300 rounded-lg text-sm hover:bg-white/10">Agent Login</a>
+                            <a href="sweepstake-websites.html" target="_blank" class="px-4 py-2 bg-white/5 text-slate-300 rounded-lg text-sm hover:bg-white/10">Sweepstake Sites</a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Games -->
+                <section id="panel-games" class="panel hidden">
+                    <h1 class="text-2xl font-bold text-white mb-2">Games & Links</h1>
+                    <p class="text-slate-400 mb-6">Manage games with logo, Player and Admin URLs. Upload logos (PNG/JPG, under 500KB).</p>
+                    <div class="glass-panel rounded-xl p-6 mb-6">
+                        <h3 class="text-white font-semibold mb-4">Add Game</h3>
+                        <form id="form-add-game" class="space-y-4">
+                            <div class="grid gap-4 md:grid-cols-3">
+                                <input type="text" id="game-name" placeholder="Game Name" required class="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                                <input type="url" id="game-player" placeholder="Player URL" required class="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                                <input type="url" id="game-admin" placeholder="Admin URL" required class="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                            </div>
+                            <div class="flex flex-wrap gap-3 items-center">
+                                <label class="flex items-center gap-2 text-sm text-slate-400 cursor-pointer">
+                                    <span>Logo (upload):</span>
+                                    <input type="file" id="game-logo-add" accept="image/png,image/jpeg,image/jpg,image/webp" class="text-sm file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:bg-yellow-400/20 file:text-yellow-400">
+                                </label>
+                                <span class="text-slate-600">or</span>
+                                <input type="url" id="game-logo-url-add" placeholder="Logo URL (optional)" class="flex-1 min-w-[180px] px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-yellow-400/50 outline-none">
+                                <span id="game-logo-add-preview" class="text-xs text-slate-500"></span>
+                            </div>
+                            <div class="flex gap-3">
+                                <button type="submit" class="px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Add Game</button>
+                                <span id="games-msg" class="text-sm py-2 hidden"></span>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="glass-panel rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto max-h-[28rem] overflow-y-auto">
+                            <table class="w-full text-sm">
+                                <thead class="sticky top-0 bg-[#0A0A0C]">
+                                    <tr class="border-b border-white/10"><th class="px-4 py-3 text-left text-slate-500 w-16">Logo</th><th class="px-4 py-3 text-left text-slate-500">Game</th><th class="px-4 py-3 text-left text-slate-500">Player</th><th class="px-4 py-3 text-left text-slate-500">Admin</th><th class="px-4 py-3 w-16"></th></tr>
+                                </thead>
+                                <tbody id="games-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <button id="save-games" class="mt-4 px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Save Games</button>
+                    <span id="games-save-msg" class="ml-3 text-sm hidden"></span>
+                </section>
+
+                <!-- Game and Agents Link -->
+                <section id="panel-game-rates" class="panel hidden">
+                    <h1 class="text-2xl font-bold text-white mb-2">Game and Agents Link</h1>
+                    <p class="text-slate-400 mb-6">Edit coin amounts and percentage rates for each game tier.</p>
+                    <div class="glass-panel rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto max-h-[28rem] overflow-y-auto">
+                            <table class="w-full text-sm">
+                                <thead class="sticky top-0 bg-[#0A0A0C]">
+                                    <tr class="border-b border-white/10">
+                                        <th class="px-4 py-3 text-left text-slate-500">Game</th>
+                                        <th class="px-4 py-3 text-left text-slate-500">Dist. Coin</th><th class="px-4 py-3 text-left text-slate-500">Dist. Rate %</th>
+                                        <th class="px-4 py-3 text-left text-slate-500">Sub Coin</th><th class="px-4 py-3 text-left text-slate-500">Sub Rate %</th>
+                                        <th class="px-4 py-3 text-left text-slate-500">Store Coin</th><th class="px-4 py-3 text-left text-slate-500">Store Rate %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="game-rates-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <button id="save-game-rates" class="mt-4 px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Save</button>
+                    <span id="game-rates-msg" class="ml-3 text-sm hidden"></span>
+                </section>
+
+                <!-- Agents & Rates -->
+                <section id="panel-agents" class="panel hidden">
+                    <h1 class="text-2xl font-bold text-white mb-2">Agents & Custom Rates</h1>
+                    <p class="text-slate-400 mb-6">Create agents and assign custom game rates per agent. Agents without custom rates use the default Game and Agents Link.</p>
+                    <div class="glass-panel rounded-xl p-6 mb-6">
+                        <h3 class="text-white font-semibold mb-4">Add Agent</h3>
+                        <form id="form-add-agent" class="space-y-4">
+                            <div class="grid gap-4 md:grid-cols-3">
+                                <input type="text" id="agent-id" placeholder="Agent ID (login)" required class="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                                <input type="password" id="agent-password" placeholder="Password" required class="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                                <input type="text" id="agent-name" placeholder="Display name (optional)" class="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                            </div>
+                            <button type="submit" class="px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Add Agent</button>
+                            <span id="agents-msg" class="ml-3 text-sm hidden"></span>
+                        </form>
+                    </div>
+                    <div class="glass-panel rounded-xl overflow-hidden mb-4">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-[#0A0A0C]">
+                                    <tr class="border-b border-white/10"><th class="px-4 py-3 text-left text-slate-500">Agent ID</th><th class="px-4 py-3 text-left text-slate-500">Name</th><th class="px-4 py-3 text-left text-slate-500">Balance</th><th class="px-4 py-3 text-left text-slate-500">Rates</th><th class="px-4 py-3 w-24"></th></tr>
+                                </thead>
+                                <tbody id="agents-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="agent-add-balance" class="hidden glass-panel rounded-xl p-6 mb-4">
+                        <h3 class="text-white font-semibold mb-2">Add balance for <span id="agent-balance-name" class="text-yellow-400"></span></h3>
+                        <p class="text-slate-500 text-sm mb-4">Credit Chime or Crypto balance. Agent will see it after refreshing their dashboard.</p>
+                        <form id="form-add-agent-balance" class="space-y-4">
+                            <div class="grid gap-4 md:grid-cols-3">
+                                <div>
+                                    <label class="block text-sm text-slate-400 mb-1">Amount ($)</label>
+                                    <input type="number" id="agent-balance-amount" step="0.01" min="0.01" required placeholder="0.00" class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-slate-400 mb-1">To</label>
+                                    <select id="agent-balance-method" class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                                        <option value="chime">Chime balance</option>
+                                        <option value="crypto">Crypto balance</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-slate-400 mb-1">Reference (optional)</label>
+                                    <input type="text" id="agent-balance-ref" placeholder="e.g. Invoice #123" class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button type="submit" class="px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Add Balance</button>
+                                <button type="button" id="agent-add-balance-close" class="px-4 py-2 text-slate-400 hover:text-white">Cancel</button>
+                                <span id="agent-balance-msg" class="text-sm hidden"></span>
+                            </div>
+                        </form>
+                    </div>
+                    <div id="agent-rates-editor" class="hidden glass-panel rounded-xl p-6 mb-4">
+                        <h3 class="text-white font-semibold mb-2">Custom rates for <span id="agent-rates-name" class="text-yellow-400"></span></h3>
+                        <p class="text-slate-500 text-sm mb-4">Override default rates for this agent. Games not listed use default rates.</p>
+                        <div class="flex flex-wrap gap-3 mb-4">
+                            <button type="button" id="agent-rates-copy-default" class="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm border border-white/10">Copy from Default</button>
+                            <button type="button" id="agent-rates-add-row" class="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm border border-white/10">Add Game Row</button>
+                            <button type="button" id="agent-rates-clear" class="px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-lg text-sm border border-red-500/30">Use Default (Clear Custom)</button>
+                        </div>
+                        <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                            <table class="w-full text-sm">
+                                <thead class="sticky top-0 bg-[#0A0A0C]">
+                                    <tr class="border-b border-white/10">
+                                        <th class="px-4 py-3 text-left text-slate-500">Game</th>
+                                        <th class="px-4 py-3 text-left text-slate-500">Rate %</th>
+                                        <th class="px-4 py-3 w-10"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="agent-rates-list"></tbody>
+                            </table>
+                        </div>
+                        <button type="button" id="agent-rates-save" class="mt-4 px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Save Rates</button>
+                        <span id="agent-rates-msg" class="ml-3 text-sm hidden"></span>
+                    </div>
+                </section>
+
+                <!-- Agent Notices -->
+                <section id="panel-notices" class="panel hidden">
+                    <h1 class="text-2xl font-bold text-white mb-2">Agent Notices</h1>
+                    <p class="text-slate-400 mb-6">Send notices that appear on the agent dashboard. Agents will see these when they log in.</p>
+                    <div class="glass-panel rounded-xl p-6 mb-6">
+                        <h3 class="text-white font-semibold mb-4">Send New Notice</h3>
+                        <form id="form-add-notice" class="space-y-4">
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-2">Message</label>
+                                <textarea id="notice-message" rows="3" placeholder="e.g. Maintenance scheduled for Sunday 2–4 AM. Coins may be delayed." required class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none placeholder-slate-600"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-2">Type</label>
+                                <select id="notice-type" class="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                                    <option value="info">Info</option>
+                                    <option value="warning">Warning</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Send Notice</button>
+                            <span id="notices-msg" class="ml-3 text-sm hidden"></span>
+                        </form>
+                    </div>
+                    <div class="glass-panel rounded-xl overflow-hidden">
+                        <h3 class="text-white font-semibold p-4 border-b border-white/10">Recent Notices</h3>
+                        <div id="notices-list" class="divide-y divide-white/5 max-h-80 overflow-y-auto">
+                            <!-- populated by JS -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- API Documentation -->
+                <section id="panel-api-docs" class="panel hidden">
+                    <h1 class="text-2xl font-bold text-white mb-2">API Documentation</h1>
+                    <p class="text-slate-400 mb-6">Upload API documentation (PDF). Users must sign up or log in to download. Add docs for Game Central API, Payment API, Chime Automation, etc.</p>
+                    <div class="glass-panel rounded-xl p-6 mb-6">
+                        <h3 class="text-white font-semibold mb-4">Upload API Doc</h3>
+                        <form id="form-add-api-doc" class="space-y-4">
+                            <div class="grid gap-4 md:grid-cols-2">
+                                <div>
+                                    <label class="block text-sm text-slate-400 mb-2">Name</label>
+                                    <input type="text" id="api-doc-name" placeholder="e.g. Game Central API Reference" required class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-slate-400 mb-2">Category</label>
+                                    <input type="text" id="api-doc-category" list="api-category-suggestions" placeholder="e.g. Game Central API, Payment API" required class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none placeholder-slate-600">
+                                    <datalist id="api-category-suggestions">
+                                        <option value="Game Central API">
+                                        <option value="Payment API">
+                                        <option value="Chime Automation Payment Confirmation">
+                                    </datalist>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-2">Description</label>
+                                <textarea id="api-doc-desc" rows="2" placeholder="Brief description of this API documentation" class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none"></textarea>
+                            </div>
+                            <div class="flex flex-wrap gap-4 items-end">
+                                <div>
+                                    <label class="block text-sm text-slate-400 mb-2">Upload PDF (max 2MB)</label>
+                                    <input type="file" id="api-doc-file" accept="application/pdf" class="text-sm file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:bg-yellow-400/20 file:text-yellow-400">
+                                </div>
+                                <span class="text-slate-500 text-sm">or</span>
+                                <div class="flex-1 min-w-[200px]">
+                                    <label class="block text-sm text-slate-400 mb-2">PDF URL (if large file)</label>
+                                    <input type="url" id="api-doc-url" placeholder="https://..." class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none text-sm">
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                <button type="submit" class="px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Add API Doc</button>
+                                <span id="api-docs-msg" class="text-sm hidden"></span>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="glass-panel rounded-xl overflow-hidden">
+                        <h3 class="text-white font-semibold p-4 border-b border-white/10">API Docs</h3>
+                        <div id="api-docs-list" class="divide-y divide-white/5 max-h-80 overflow-y-auto"></div>
+                    </div>
+                </section>
+
+                <!-- Navigation -->
+                <section id="panel-navigation" class="panel hidden">
+                    <h1 class="text-2xl font-bold text-white mb-2">Navigation & Footer</h1>
+                    <p class="text-slate-400 mb-6">Edit nav and footer links. One link per line: label|href (e.g. Gaming Coins|gaming-coins.html)</p>
+                    <div class="glass-panel rounded-xl p-6 mb-4">
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Nav Links</label>
+                        <textarea id="edit-nav" rows="6" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none font-mono text-sm"></textarea>
+                    </div>
+                    <div class="glass-panel rounded-xl p-6 mb-4">
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Footer Links</label>
+                        <textarea id="edit-footer" rows="6" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none font-mono text-sm"></textarea>
+                    </div>
+                    <button id="save-nav" class="px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Save Navigation</button>
+                    <span id="nav-msg" class="ml-3 text-sm hidden"></span>
+                </section>
+
+                <!-- Services -->
+                <section id="panel-services" class="panel hidden">
+                    <h1 class="text-2xl font-bold text-white mb-2">Services</h1>
+                    <p class="text-slate-400 mb-6">Homepage service cards. JSON format or use the table below.</p>
+                    <div id="services-editor" class="space-y-4"></div>
+                    <button id="save-services" class="mt-4 px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Save Services</button>
+                    <span id="services-msg" class="ml-3 text-sm hidden"></span>
+                </section>
+
+                <!-- Demo UIs -->
+                <section id="panel-demo-uis" class="panel hidden">
+                    <h1 class="text-2xl font-bold text-white mb-2">Sweepstake Demo UIs</h1>
+                    <p class="text-slate-400 mb-6">Add demo sweepstakes website UIs for agents to preview. Shown on the Sweepstake Sites page before packages.</p>
+                    <div class="glass-panel rounded-xl p-6 mb-6">
+                        <h3 class="text-white font-semibold mb-4" id="demo-ui-form-title">Add Demo UI</h3>
+                        <form id="form-add-demo-ui" class="space-y-4">
+                            <div class="grid gap-4 md:grid-cols-2">
+                                <div>
+                                    <label class="block text-sm text-slate-400 mb-2">Name</label>
+                                    <input type="text" id="demo-ui-name" placeholder="e.g. Modern Dark Theme" required class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-slate-400 mb-2">Package</label>
+                                    <select id="demo-ui-package" class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                                        <option value="">— Any —</option>
+                                        <option value="bronze">Bronze</option>
+                                        <option value="gold">Gold</option>
+                                        <option value="diamond">Diamond</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-2">Screenshot / Preview Image</label>
+                                <div class="space-y-3">
+                                    <label class="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white/5 border border-dashed border-white/20 hover:border-yellow-400/50 cursor-pointer transition-colors">
+                                        <iconify-icon icon="solar:upload-linear" width="20"></iconify-icon>
+                                        <span>Upload up to 3 PNG images</span>
+                                        <input type="file" id="demo-ui-image-file" accept="image/png" multiple class="hidden">
+                                    </label>
+                                    <p class="text-slate-500 text-xs">or paste image URL (adds 1 more, max 3 total):</p>
+                                    <input type="url" id="demo-ui-image" placeholder="https://..." class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                                    <div id="demo-ui-image-preview" class="hidden mt-2 flex gap-2 flex-wrap"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-2">Demo URL (live preview link)</label>
+                                <input type="url" id="demo-ui-url" placeholder="https://demo.example.com (optional)" class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-2">Description (optional)</label>
+                                <input type="text" id="demo-ui-desc" placeholder="Brief description" class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                            </div>
+                            <button type="submit" id="demo-ui-submit-btn" class="px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Add Demo UI</button>
+                            <button type="button" id="demo-ui-cancel-btn" class="hidden ml-2 px-6 py-2 text-slate-400 hover:text-white border border-white/20 rounded-lg font-semibold">Cancel</button>
+                            <span id="demo-uis-msg" class="ml-3 text-sm hidden"></span>
+                        </form>
+                    </div>
+                    <div class="glass-panel rounded-xl overflow-hidden">
+                        <h3 class="text-white font-semibold p-4 border-b border-white/10">Demo UIs List</h3>
+                        <div id="demo-uis-list" class="divide-y divide-white/5 max-h-80 overflow-y-auto">
+                            <!-- populated by JS -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Platform Orders -->
+                <section id="panel-platform-orders" class="panel hidden">
+                    <h1 class="text-2xl font-bold text-white mb-2">Platform Package Orders</h1>
+                    <p class="text-slate-400 mb-6">Orders placed by agents for Bronze, Gold, or Diamond platform packages.</p>
+                    <div class="glass-panel rounded-xl overflow-hidden">
+                        <div id="platform-orders-list" class="divide-y divide-white/5 max-h-96 overflow-y-auto">
+                            <!-- populated by JS -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Packages -->
+                <section id="panel-packages" class="panel hidden">
+                    <h1 class="text-2xl font-bold text-white mb-2">Packages</h1>
+                    <p class="text-slate-400 mb-6">Sweepstake platform packages (Bronze, Gold, Diamond).</p>
+                    <div id="packages-editor" class="space-y-4"></div>
+                    <button id="save-packages" class="mt-4 px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Save Packages</button>
+                    <span id="packages-msg" class="ml-3 text-sm hidden"></span>
+                </section>
+
+                <!-- Marketplace -->
+                <section id="panel-marketplace" class="panel hidden">
+                    <h1 class="text-2xl font-bold text-white mb-2">Marketplace Add-Ons</h1>
+                    <p class="text-slate-400 mb-6">Add-on items for sweepstake platforms (Custom Domain, Extra Payments, etc.).</p>
+                    <div id="marketplace-editor" class="space-y-4"></div>
+                    <button id="save-marketplace" class="mt-4 px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Save Marketplace</button>
+                    <span id="marketplace-msg" class="ml-3 text-sm hidden"></span>
+                </section>
+
+                <!-- Features -->
+                <section id="panel-features" class="panel hidden">
+                    <h1 class="text-2xl font-bold text-white mb-2">Features</h1>
+                    <p class="text-slate-400 mb-6">"Why Us" feature icons on homepage.</p>
+                    <div id="features-editor" class="space-y-4"></div>
+                    <button id="save-features" class="mt-4 px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Save Features</button>
+                    <span id="features-msg" class="ml-3 text-sm hidden"></span>
+                </section>
+
+                <!-- Blogs -->
+                <section id="panel-blogs" class="panel hidden">
+                    <h1 class="text-2xl font-bold text-white mb-2">Blogs & PDFs</h1>
+                    <p class="text-slate-400 mb-6">Add blog posts with PDF downloads. Upload PDF (under 2MB) or paste a PDF URL.</p>
+                    <div class="glass-panel rounded-xl p-6 mb-6">
+                        <h3 class="text-white font-semibold mb-4">Add Blog / PDF</h3>
+                        <form id="form-add-blog" class="space-y-4">
+                            <input type="text" id="blog-title" placeholder="Title" required class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                            <textarea id="blog-desc" rows="2" placeholder="Short description" class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none"></textarea>
+                            <div class="grid gap-3 md:grid-cols-2">
+                                <div>
+                                    <label class="block text-xs text-slate-500 mb-1">PDF URL (optional — for large files)</label>
+                                    <input type="url" id="blog-pdf-url" placeholder="https://..." class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-500 mb-1">Or upload PDF file (under 2MB)</label>
+                                    <input type="file" id="blog-pdf-file" accept="application/pdf" class="w-full text-sm text-slate-400 file:mr-2 file:py-2 file:px-4 file:rounded file:border-0 file:bg-yellow-400/20 file:text-yellow-400">
+                                </div>
+                            </div>
+                            <button type="submit" class="px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Add Blog</button>
+                            <span id="blogs-msg" class="ml-3 text-sm hidden"></span>
+                        </form>
+                    </div>
+                    <div class="glass-panel rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                            <table class="w-full text-sm">
+                                <thead class="sticky top-0 bg-[#0A0A0C]">
+                                    <tr class="border-b border-white/10"><th class="px-4 py-3 text-left text-slate-500">Title</th><th class="px-4 py-3 text-left text-slate-500">PDF</th><th class="px-4 py-3 w-16"></th></tr>
+                                </thead>
+                                <tbody id="blogs-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Contact Info -->
+                <section id="panel-contact" class="panel hidden">
+                    <h1 class="text-2xl font-bold text-white mb-2">Contact Info</h1>
+                    <p class="text-slate-400 mb-6">Contact details shown in footer and contact page.</p>
+                    <div class="glass-panel rounded-xl p-6 space-y-4">
+                        <div><label class="block text-sm text-slate-400 mb-1">Email</label><input type="email" id="contact-email" placeholder="support@example.com" class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none"></div>
+                        <div><label class="block text-sm text-slate-400 mb-1">Phone</label><input type="text" id="contact-phone" placeholder="+1 234 567 8900" class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none"></div>
+                        <div><label class="block text-sm text-slate-400 mb-1">WhatsApp</label><input type="text" id="contact-whatsapp" placeholder="+1234567890" class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none"></div>
+                        <div><label class="block text-sm text-slate-400 mb-1">Telegram</label><input type="text" id="contact-telegram" placeholder="@username" class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none"></div>
+                        <div><label class="block text-sm text-slate-400 mb-1">Address</label><input type="text" id="contact-address" placeholder="Your business address" class="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none"></div>
+                        <button id="save-contact" class="px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Save Contact Info</button>
+                        <span id="contact-msg" class="ml-3 text-sm hidden"></span>
+                    </div>
+                </section>
+
+                <!-- Marquee -->
+                <section id="panel-marquee" class="panel hidden">
+                    <h1 class="text-2xl font-bold text-white mb-2">Marquee Games</h1>
+                    <p class="text-slate-400 mb-6">Games shown in the scrolling marquee on homepage. Comma-separated.</p>
+                    <div class="glass-panel rounded-xl p-6">
+                        <textarea id="edit-marquee" rows="3" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none" placeholder="Firekirin, Juwa, VegasX, Orion Star, ..."></textarea>
+                    </div>
+                    <button id="save-marquee" class="mt-4 px-6 py-2 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300">Save Marquee</button>
+                    <span id="marquee-msg" class="ml-3 text-sm hidden"></span>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/admin-dashboard.js"></script>
+</body>
+</html>

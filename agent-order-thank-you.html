@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You | Gaming Coin Hub</title>
+    <meta name="robots" content="noindex, nofollow">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .agent-grid-bg { background-size: 32px 32px; background-image: linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px); }
+        .agent-glow { background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(250,204,21,0.15), transparent 50%); }
+    </style>
+</head>
+<body class="bg-[#0E0E11] text-slate-400 antialiased selection:bg-yellow-400/20 selection:text-yellow-400 min-h-screen relative">
+    <div class="fixed inset-0 agent-grid-bg agent-glow pointer-events-none z-0"></div>
+    <script>window.CURRENT_PAGE = 'agent';</script>
+    <script src="js/site-data.js"></script>
+    <script src="js/agent-data.js"></script>
+    <div class="relative z-10 min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-lg">
+            <a href="index.html" class="flex items-center gap-2 mb-8 justify-center">
+                <img src="images/gaming-coinhub-logo.png" alt="Gaming Coin Hub" class="h-14 object-contain">
+            </a>
+            <div class="glass-panel rounded-2xl p-8 text-center">
+                <div class="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6">
+                    <iconify-icon icon="solar:check-circle-linear" class="text-green-400 text-5xl"></iconify-icon>
+                </div>
+                <h1 class="text-2xl font-bold text-white mb-2">Thank You!</h1>
+                <p class="text-slate-400 mb-6">Your order has been placed successfully.</p>
+                <div id="order-details" class="text-left rounded-xl bg-white/5 border border-white/10 p-4 mb-6 space-y-2 text-sm">
+                    <!-- Populated by JS -->
+                </div>
+                <p class="text-slate-500 text-xs mb-6">Coins will be delivered to your game username. Contact support if you have any questions.</p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href="agent-dashboard.html" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300 transition-colors">
+                        <iconify-icon icon="solar:cart-large-2-linear"></iconify-icon>
+                        New Order
+                    </a>
+                    <a href="agent-dashboard.html#dashboard" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/5 text-white border border-white/20 rounded-lg font-medium hover:bg-white/10 transition-colors">
+                        <iconify-icon icon="solar:home-2-linear"></iconify-icon>
+                        Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function() {
+            if (!AgentData.isLoggedIn()) {
+                location.href = 'agent-login.html?return=agent-order-thank-you.html';
+                return;
+            }
+            var details = document.getElementById('order-details');
+            try {
+                var lastOrder = sessionStorage.getItem('gch_last_order');
+                if (lastOrder) {
+                    var o = JSON.parse(lastOrder);
+                    var tierLabel = { distributor: 'Distributor', subdistributor: 'Sub-distributor', store: 'Store' }[o.tier] || o.tier || '—';
+                    details.innerHTML = '<p><span class="text-slate-500">Game:</span> <span class="text-white font-medium">' + (o.game || '—').replace(/</g, '&lt;') + '</p>' +
+                        '<p><span class="text-slate-500">Coins:</span> <span class="text-white font-medium">' + (o.coins || '—') + '</p>' +
+                        '<p><span class="text-slate-500">Username:</span> <span class="text-white font-medium">' + (o.username || '—').replace(/</g, '&lt;') + '</p>' +
+                        '<p><span class="text-slate-500">Tier:</span> <span class="text-yellow-400">' + tierLabel + '</span></p>' +
+                        '<p><span class="text-slate-500">Amount paid:</span> <span class="text-green-400 font-bold">$' + (o.amount != null ? parseFloat(o.amount).toFixed(2) : '0.00') + '</span></p>';
+                    sessionStorage.removeItem('gch_last_order');
+                } else {
+                    details.innerHTML = '<p class="text-slate-500">Order placed. Check your transaction history on the dashboard.</p>';
+                }
+            } catch (e) {
+                details.innerHTML = '<p class="text-slate-500">Order placed successfully. Check your transaction history on the dashboard.</p>';
+            }
+        })();
+    </script>
+</body>
+</html>

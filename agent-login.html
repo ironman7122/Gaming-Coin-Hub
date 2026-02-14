@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Login | Gaming Coin Hub</title>
+    <meta name="robots" content="noindex, nofollow">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .grid-bg { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+    </style>
+</head>
+<body class="bg-[#0E0E11] text-slate-400 antialiased selection:bg-yellow-400/20 selection:text-yellow-400">
+    <script src="https://cdn.jsdelivr.net/npm/@otplib/preset-browser@12.0.1/buffer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@otplib/preset-browser@12.0.1/index.js"></script>
+    <script src="js/agent-data.js"></script>
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="absolute inset-0 grid-bg pointer-events-none opacity-50"></div>
+        <div class="w-full max-w-md relative z-10">
+            <a href="index.html" class="flex items-center gap-2 mb-8 justify-center">
+                <img src="images/gaming-coinhub-logo.png" alt="Gaming Coin Hub" class="h-14 object-contain">
+            </a>
+            <div class="glass-panel rounded-2xl p-8">
+                <h1 class="text-2xl font-bold text-white mb-1">Agent Login</h1>
+                <p class="text-slate-400 text-sm mb-6">Sign in to top up balance and buy gaming coins.</p>
+                <form id="login-form" class="space-y-4">
+                    <div>
+                        <label for="agentId" class="block text-sm font-medium text-slate-300 mb-2">Email or Agent ID</label>
+                        <input type="text" id="agentId" name="agentId" required class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none" placeholder="email@example.com or agent">
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="password" class="block text-sm font-medium text-slate-300">Password</label>
+                            <a href="agent-forgot-password.html" class="text-xs text-yellow-400 hover:text-yellow-300">Forgot password?</a>
+                        </div>
+                        <input type="password" id="password" name="password" required class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none" placeholder="••••••••">
+                    </div>
+                    <div id="login-2fa-section" class="hidden space-y-4">
+                        <label for="totp-code" class="block text-sm font-medium text-slate-300 mb-2">Two-Factor Code</label>
+                        <input type="text" id="totp-code" maxlength="6" pattern="[0-9]*" inputmode="numeric" placeholder="000000" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none font-mono tracking-widest text-center">
+                    </div>
+                    <div id="login-message" class="hidden py-3 px-4 rounded-lg text-sm"></div>
+                    <button type="submit" class="w-full py-3 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300 transition-colors">Login</button>
+                </form>
+                <p class="mt-6 text-center text-slate-500 text-xs">Use email or agent ID. Demo (if no agents): agent / Agent123</p>
+                <p class="mt-4 text-center text-slate-500 text-sm">
+                    New agent? <a id="signup-link" href="agent-signup.html" class="text-yellow-400 hover:text-yellow-300 font-medium">Sign up</a>
+                </p>
+            </div>
+            <p class="mt-6 text-center text-slate-500 text-sm">
+                <a href="index.html" class="hover:text-white transition-colors">← Back to Home</a>
+            </p>
+        </div>
+    </div>
+    <script>
+        function getReturnUrl() {
+            var p = new URLSearchParams(window.location.search);
+            var r = p.get('return');
+            return (r && r.indexOf('..') === -1) ? r : 'agent-dashboard.html';
+        }
+        if (AgentData.isLoggedIn()) {
+            location.href = getReturnUrl();
+        }
+        var r = new URLSearchParams(window.location.search).get('return');
+        if (r) document.getElementById('signup-link').href = 'agent-signup.html?return=' + encodeURIComponent(r);
+        var forgotHref = 'agent-forgot-password.html';
+        if (r) forgotHref += '?return=' + encodeURIComponent(r);
+        document.querySelector('a[href="agent-forgot-password.html"]').href = forgotHref;
+        var pending2FAAgentId = null;
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var msg = document.getElementById('login-message');
+            if (pending2FAAgentId) {
+                var code = document.getElementById('totp-code').value.trim();
+                if (AgentData.loginWith2FA(pending2FAAgentId, code)) {
+                    location.href = getReturnUrl();
+                } else {
+                    msg.textContent = 'Invalid 2FA code.';
+                    msg.className = 'py-3 px-4 rounded-lg text-sm bg-red-500/20 text-red-400';
+                    msg.classList.remove('hidden');
+                }
+                return;
+            }
+            var id = document.getElementById('agentId').value.trim();
+            var pw = document.getElementById('password').value;
+            var result = AgentData.login(id, pw);
+            if (result && result.ok) {
+                location.href = getReturnUrl();
+            } else if (result && result.needs2FA) {
+                pending2FAAgentId = result.agentId;
+                document.getElementById('login-2fa-section').classList.remove('hidden');
+                document.getElementById('agentId').disabled = true;
+                document.getElementById('password').disabled = true;
+                document.getElementById('totp-code').value = '';
+                document.getElementById('totp-code').focus();
+                msg.classList.add('hidden');
+            } else {
+                msg.textContent = 'Invalid ID or password.';
+                msg.className = 'py-3 px-4 rounded-lg text-sm bg-red-500/20 text-red-400';
+                msg.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

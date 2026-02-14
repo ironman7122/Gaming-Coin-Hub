@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Sign Up | Gaming Coin Hub</title>
+    <meta name="robots" content="noindex, nofollow">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .grid-bg { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+    </style>
+</head>
+<body class="bg-[#0E0E11] text-slate-400 antialiased selection:bg-yellow-400/20 selection:text-yellow-400">
+    <script src="js/agent-data.js"></script>
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="absolute inset-0 grid-bg pointer-events-none opacity-50"></div>
+        <div class="w-full max-w-md relative z-10">
+            <a href="index.html" class="flex items-center gap-2 mb-8 justify-center">
+                <img src="images/gaming-coinhub-logo.png" alt="Gaming Coin Hub" class="h-14 object-contain">
+            </a>
+            <div class="glass-panel rounded-2xl p-8">
+                <h1 class="text-2xl font-bold text-white mb-1">Agent Sign Up</h1>
+                <p class="text-slate-400 text-sm mb-6">Create an account to load balance and buy gaming coins instantly.</p>
+                <form id="signup-form" class="space-y-4">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-slate-300 mb-2">Email address</label>
+                        <input type="email" id="email" name="email" required placeholder="you@example.com" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                        <input type="password" id="password" name="password" required minlength="6" placeholder="Min 6 characters" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                    </div>
+                    <div>
+                        <label for="confirm-password" class="block text-sm font-medium text-slate-300 mb-2">Confirm password</label>
+                        <input type="password" id="confirm-password" name="confirmPassword" required minlength="6" placeholder="Repeat password" class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none">
+                    </div>
+                    <div id="signup-message" class="hidden py-3 px-4 rounded-lg text-sm"></div>
+                    <button type="submit" class="w-full py-3 bg-yellow-400 text-[#0E0E11] rounded-lg font-semibold hover:bg-yellow-300 transition-colors">Sign Up</button>
+                </form>
+                <p class="mt-6 text-center text-slate-500 text-sm">
+                    Already have an account? <a id="login-link" href="agent-login.html" class="text-yellow-400 hover:text-yellow-300">Log in</a>
+                </p>
+            </div>
+            <p class="mt-6 text-center text-slate-500 text-sm">
+                <a href="index.html" class="hover:text-white transition-colors">← Back to Home</a>
+            </p>
+        </div>
+    </div>
+    <script>
+        function getReturnUrl() {
+            var p = new URLSearchParams(window.location.search);
+            var r = p.get('return');
+            return (r && r.indexOf('..') === -1) ? r : 'agent-dashboard.html';
+        }
+        if (AgentData.isLoggedIn()) {
+            location.href = getReturnUrl();
+        } else {
+        var r = new URLSearchParams(window.location.search).get('return');
+        if (r) document.getElementById('login-link').href = 'agent-login.html?return=' + encodeURIComponent(r);
+        document.getElementById('signup-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var email = document.getElementById('email').value.trim();
+            var pw = document.getElementById('password').value;
+            var confirmPw = document.getElementById('confirm-password').value;
+            var msg = document.getElementById('signup-message');
+            if (pw !== confirmPw) {
+                msg.textContent = 'Passwords do not match.';
+                msg.className = 'py-3 px-4 rounded-lg text-sm bg-red-500/20 text-red-400';
+                msg.classList.remove('hidden');
+                return;
+            }
+            var result = AgentData.registerAgent(email, pw);
+            if (result.ok) {
+                location.href = getReturnUrl();
+            } else {
+                msg.textContent = result.msg || 'Sign up failed.';
+                msg.className = 'py-3 px-4 rounded-lg text-sm bg-red-500/20 text-red-400';
+                msg.classList.remove('hidden');
+            }
+        });
+        }
+    </script>
+</body>
+</html>

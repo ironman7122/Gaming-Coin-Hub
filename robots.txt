@@ -1,0 +1,6 @@
+# Gaming Coin Hub - Robots
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://gamingcoinhub.com/sitemap.xml

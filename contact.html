@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us | Gaming Coin Hub</title>
+    <meta name="description" content="Contact Gaming Coin Hub. Support for USA, India, Pakistan, Bangladesh, Nepal. Email, WhatsApp, Telegram.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://gamingcoinhub.com/contact.html">
+    <link rel="alternate" hreflang="en-US" href="https://gamingcoinhub.com/contact.html">
+    <link rel="alternate" hreflang="en-IN" href="https://gamingcoinhub.com/contact.html">
+    <link rel="alternate" hreflang="en-PK" href="https://gamingcoinhub.com/contact.html">
+    <link rel="alternate" hreflang="en-BD" href="https://gamingcoinhub.com/contact.html">
+    <link rel="alternate" hreflang="en-NP" href="https://gamingcoinhub.com/contact.html">
+    <link rel="alternate" hreflang="x-default" href="https://gamingcoinhub.com/contact.html">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .grid-bg { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+    </style>
+</head>
+<body class="bg-[#0E0E11] text-slate-400 antialiased selection:bg-yellow-400/20 selection:text-yellow-400">
+    <script>window.CURRENT_PAGE = 'contact';</script>
+    <script src="js/site-data.js"></script>
+    <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-[#0E0E11]/90 backdrop-blur-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2.5">
+                <img src="images/gaming-coinhub-logo.png" alt="Gaming Coin Hub" class="h-10 object-contain">
+            </a>
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium" id="nav-links"></div>
+            <div class="flex items-center gap-4">
+                <a href="admin.html" class="hidden md:block text-sm font-medium hover:text-white transition-colors">Admin</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="relative pt-32 pb-12 overflow-hidden">
+        <div class="absolute inset-0 grid-bg [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_70%)] pointer-events-none"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 text-center">
+            <h1 class="text-3xl sm:text-4xl md:text-6xl font-bold text-white tracking-tight mb-6">
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600">Contact</span> Us
+            </h1>
+            <p class="text-lg text-slate-400 max-w-2xl mx-auto">
+                Get in touch for support, partnerships, or inquiries. We serve USA, India, Pakistan, Bangladesh &amp; Nepal.
+            </p>
+        </div>
+    </section>
+
+    <section class="py-16 pb-24 border-t border-white/5">
+        <div class="max-w-2xl mx-auto px-4 sm:px-6">
+            <div id="contact-cards" class="glass-panel rounded-2xl p-8 space-y-6"></div>
+            <div id="contact-empty" class="hidden text-center py-16 text-slate-500">
+                <iconify-icon icon="solar:phone-linear" width="48" class="mx-auto mb-4 opacity-50"></iconify-icon>
+                <p>Contact info not set yet. Add it from the Admin panel.</p>
+                <a href="admin.html" class="inline-block mt-4 text-yellow-400 hover:text-yellow-300">Go to Admin</a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="border-t border-white/5 bg-[#0A0A0C] py-12 text-sm mt-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="images/gaming-coinhub-logo.png" alt="Gaming Coin Hub" class="h-8 object-contain opacity-90 hover:opacity-100 transition-opacity">
+                </a>
+                <div class="flex gap-6 text-slate-500" id="footer-links"></div>
+                <div class="text-slate-600">© 2025 Gaming Coin Hub.</div>
+            </div>
+            <div id="footer-contact" class="hidden mt-6 pt-6 border-t border-white/5 text-slate-500 text-sm flex flex-wrap justify-center gap-4"></div>
+        </div>
+    </footer>
+
+    <script src="js/layout.js"></script>
+    <script>
+        (function() {
+            try {
+                var stored = localStorage.getItem('gch_site_data');
+                if (stored) { var parsed = JSON.parse(stored); if (parsed && parsed.contact) { SITE_DATA.contact = parsed.contact; } }
+            } catch (e) {}
+            var c = (typeof SITE_DATA !== 'undefined' && SITE_DATA.contact) ? SITE_DATA.contact : {};
+            var hasAny = !!(c.email || c.phone || c.whatsapp || c.telegram || c.address);
+            var cards = document.getElementById('contact-cards');
+            var empty = document.getElementById('contact-empty');
+            if (!hasAny) {
+                cards.classList.add('hidden');
+                empty.classList.remove('hidden');
+            } else {
+                cards.classList.remove('hidden');
+                empty.classList.add('hidden');
+                var items = [];
+                if (c.email) items.push('<a href="mailto:' + c.email + '" class="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 transition-colors"><div class="w-12 h-12 rounded-lg bg-yellow-400/20 flex items-center justify-center"><iconify-icon icon="solar:letter-linear" class="text-yellow-400" width="24"></iconify-icon></div><div><div class="text-white font-medium">Email</div><div class="text-sm text-slate-400">' + c.email + '</div></div></a>');
+                if (c.phone) items.push('<a href="tel:' + c.phone.replace(/\s/g, '') + '" class="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 transition-colors"><div class="w-12 h-12 rounded-lg bg-yellow-400/20 flex items-center justify-center"><iconify-icon icon="solar:phone-linear" class="text-yellow-400" width="24"></iconify-icon></div><div><div class="text-white font-medium">Phone</div><div class="text-sm text-slate-400">' + c.phone + '</div></div></a>');
+                if (c.whatsapp) items.push('<a href="https://wa.me/' + c.whatsapp.replace(/\D/g, '') + '" target="_blank" rel="noopener" class="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 transition-colors"><div class="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center"><iconify-icon icon="logos:whatsapp-icon" class="text-green-400" width="24"></iconify-icon></div><div><div class="text-white font-medium">WhatsApp</div><div class="text-sm text-slate-400">' + c.whatsapp + '</div></div></a>');
+                if (c.telegram) items.push('<a href="https://t.me/' + c.telegram.replace('@', '') + '" target="_blank" rel="noopener" class="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 transition-colors"><div class="w-12 h-12 rounded-lg bg-sky-500/20 flex items-center justify-center"><iconify-icon icon="logos:telegram" class="text-sky-400" width="24"></iconify-icon></div><div><div class="text-white font-medium">Telegram</div><div class="text-sm text-slate-400">' + c.telegram + '</div></div></a>');
+                if (c.address) items.push('<div class="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5"><div class="w-12 h-12 rounded-lg bg-yellow-400/20 flex items-center justify-center"><iconify-icon icon="solar:map-point-linear" class="text-yellow-400" width="24"></iconify-icon></div><div><div class="text-white font-medium">Address</div><div class="text-sm text-slate-400">' + c.address + '</div></div></div>');
+                cards.innerHTML = items.join('');
+            }
+        })();
+    </script>
+</body>
+</html>

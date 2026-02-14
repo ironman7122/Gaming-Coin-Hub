@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Platform Package | Gaming Coin Hub</title>
+    <meta name="robots" content="noindex, nofollow">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .grid-bg { background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
+    </style>
+</head>
+<body class="bg-[#0E0E11] text-slate-400 antialiased selection:bg-yellow-400/20 selection:text-yellow-400">
+    <script>window.CURRENT_PAGE = 'platform';</script>
+    <script src="js/site-data.js"></script>
+    <script src="js/agent-data.js"></script>
+    <script src="js/admin-data.js"></script>
+    <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-[#0E0E11]/90 backdrop-blur-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2.5">
+                <img src="images/gaming-coinhub-logo.png" alt="Gaming Coin Hub" class="h-10 object-contain">
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="sweepstake-websites.html" class="text-sm text-slate-400 hover:text-white transition-colors">← Back to Packages</a>
+                <a href="agent-dashboard.html" class="px-4 py-2 bg-yellow-400 text-[#0E0E11] text-xs font-semibold rounded hover:bg-yellow-300 transition-all">Agent Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="min-h-screen pt-24 pb-16 px-4">
+        <div class="absolute inset-0 grid-bg pointer-events-none opacity-50"></div>
+        <div class="max-w-2xl mx-auto relative z-10">
+            <a href="sweepstake-websites.html" class="inline-flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-8">
+                <iconify-icon icon="solar:arrow-left-linear"></iconify-icon> Back to Sweepstake Websites
+            </a>
+            <div class="glass-panel rounded-2xl p-8">
+                <h1 class="text-2xl font-bold text-white mb-2">Order Platform Package</h1>
+                <p class="text-slate-400 text-sm mb-6">Place your order for a sweepstakes platform. Our team will contact you to set up your account.</p>
+                <div id="order-content">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            if (!AgentData.isLoggedIn()) {
+                location.href = 'agent-login.html?return=' + encodeURIComponent('platform-order.html' + window.location.search);
+                return;
+            }
+            var p = new URLSearchParams(window.location.search);
+            var packageId = p.get('package') || '';
+            var siteData = typeof AdminData !== 'undefined' ? AdminData.loadSiteData() : (typeof SITE_DATA !== 'undefined' ? SITE_DATA : {});
+            var packages = siteData.packages || [];
+            var pkg = packages.find(function(x) { return (x.id || '').toLowerCase() === packageId.toLowerCase(); }) || packages[0];
+            var content = document.getElementById('order-content');
+            if (!content) return;
+            if (!pkg) {
+                content.innerHTML = '<p class="text-slate-500">No package selected. <a href="sweepstake-websites.html#pricing" class="text-yellow-400 hover:underline">Choose a package</a>.</p>';
+                return;
+            }
+            var agentId = AgentData.getAgentId();
+            content.innerHTML = '<div class="space-y-6">' +
+                '<div class="p-4 rounded-xl bg-white/5 border border-white/10">' +
+                '<p class="text-slate-500 text-xs mb-1">Selected Package</p>' +
+                '<h2 class="text-xl font-bold text-white">' + (pkg.name || '').replace(/</g, '&lt;') + '</h2>' +
+                '<p class="text-slate-400 text-sm mt-1">' + (pkg.subtitle || '').replace(/</g, '&lt;') + '</p>' +
+                '</div>' +
+                '<div class="p-4 rounded-xl bg-white/5 border border-white/10">' +
+                '<p class="text-slate-500 text-xs mb-1">Ordering as</p>' +
+                '<p class="text-white font-medium">' + (agentId || '').replace(/</g, '&lt;') + '</p>' +
+                '</div>' +
+                '<form id="platform-order-form" class="space-y-4">' +
+                '<div><label class="block text-sm text-slate-400 mb-2">Additional notes (optional)</label><textarea id="order-notes" rows="3" placeholder="Any special requirements or questions..." class="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:border-yellow-400/50 outline-none placeholder-slate-600"></textarea></div>' +
+                '<div id="order-msg" class="hidden py-3 px-4 rounded-lg text-sm"></div>' +
+                '<button type="submit" class="w-full py-4 bg-yellow-400 text-[#0E0E11] rounded-xl font-bold hover:bg-yellow-300 transition-colors flex items-center justify-center gap-2"><iconify-icon icon="solar:cart-large-2-linear"></iconify-icon> Place Order</button>' +
+                '</form></div>';
+            document.getElementById('platform-order-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                var notes = document.getElementById('order-notes').value.trim();
+                var orders = [];
+                try { orders = JSON.parse(localStorage.getItem('gch_platform_orders') || '[]'); } catch (err) {}
+                orders.unshift({ id: Date.now() + '-' + Math.random().toString(36).slice(2, 9), agentId: agentId, packageId: pkg.id, packageName: pkg.name, notes: notes, time: new Date().toISOString() });
+                if (orders.length > 50) orders = orders.slice(0, 50);
+                localStorage.setItem('gch_platform_orders', JSON.stringify(orders));
+                var msg = document.getElementById('order-msg');
+                msg.textContent = 'Order placed successfully! We will contact you at ' + agentId + ' to set up your platform.';
+                msg.className = 'py-3 px-4 rounded-lg text-sm bg-green-500/20 text-green-400';
+                msg.classList.remove('hidden');
+                document.getElementById('order-notes').value = '';
+                setTimeout(function() { location.href = 'platform-order-thank-you.html?package=' + encodeURIComponent(pkg.id || ''); }, 1500);
+            });
+        })();
+    </script>
+</body>
+</html>
