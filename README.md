@@ -26,3 +26,4 @@ Edit **`js/site-data.js`** to update content across the website:
 ## Setup
 
 See `GAME-RATES-SETUP.md` for Google Sheets and admin configuration.
+# Gaming-Coin-Hub
