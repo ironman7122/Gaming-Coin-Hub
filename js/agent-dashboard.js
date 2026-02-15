@@ -15,19 +15,28 @@
   var agentId = AgentData.getAgentId();
   var customRates = AgentData.getGameRatesForAgent(agentId);
   var gameRates = (function() {
-    if (!customRates || customRates.length === 0) return defaultRates;
-    var byName = {};
-    defaultRates.forEach(function(r) { byName[r.name] = JSON.parse(JSON.stringify(r)); });
-    customRates.forEach(function(r) {
-      if (!r.name) return;
-      var def = defaultRates.find(function(x) { return x.name === r.name; }) || {};
-      var d = def.distributor || def.subdistributor || def.store || {};
-      var coin = (r.coin !== undefined && r.coin !== null) ? (parseInt(r.coin, 10) || 0) : (parseInt(d.coin, 10) || 0);
-      var rate = parseInt(r.rate, 10) || 0;
-      var t = { coin: coin, rate: rate };
-      byName[r.name] = { name: r.name, distributor: t, subdistributor: t, store: t };
-    });
-    return Object.keys(byName).sort().map(function(k) { return byName[k]; });
+    var base = defaultRates;
+    if (!customRates || customRates.length === 0) {
+      base = defaultRates;
+    } else {
+      var byName = {};
+      defaultRates.forEach(function(r) { byName[r.name] = JSON.parse(JSON.stringify(r)); });
+      customRates.forEach(function(r) {
+        if (!r.name) return;
+        var def = defaultRates.find(function(x) { return x.name === r.name; }) || {};
+        var d = def.distributor || def.subdistributor || def.store || {};
+        var coin = (r.coin !== undefined && r.coin !== null) ? (parseInt(r.coin, 10) || 0) : (parseInt(d.coin, 10) || 0);
+        var rate = parseInt(r.rate, 10) || 0;
+        var t = { coin: coin, rate: rate };
+        byName[r.name] = { name: r.name, distributor: t, subdistributor: t, store: t };
+      });
+      base = Object.keys(byName).sort().map(function(k) { return byName[k]; });
+    }
+    if (base.length === 0) {
+      var names = (siteData.gameNames || []).length ? siteData.gameNames : (typeof SITE_DATA !== 'undefined' && SITE_DATA.gameNames ? SITE_DATA.gameNames : []);
+      base = names.map(function(n) { return { name: n, distributor: { coin: 1000, rate: 10 }, subdistributor: { coin: 500, rate: 12 }, store: { coin: 500, rate: 15 } }; });
+    }
+    return base;
   })();
 
   function updateBalance() {
@@ -294,7 +303,8 @@
     update2FAStatus();
   })();
 
-  document.getElementById('settings-password-form').addEventListener('submit', function(e) {
+  var settingsForm = document.getElementById('settings-password-form');
+  if (settingsForm) settingsForm.addEventListener('submit', function(e) {
     e.preventDefault();
     var current = document.getElementById('settings-current-pw').value;
     var newPw = document.getElementById('settings-new-pw').value;
@@ -422,23 +432,48 @@
     applyPreset(365);
   })();
 
-  // Buy form
-  var gameSelect = document.getElementById('buy-game');
-  if (gameSelect) {
-    gameSelect.innerHTML = '';
-    var placeholder = document.createElement('option');
-    placeholder.value = '';
-    placeholder.textContent = gameRates.length ? '— Select game —' : '— No games configured —';
-    placeholder.disabled = true;
-    placeholder.selected = true;
-    gameSelect.appendChild(placeholder);
+  // Buy form - custom game dropdown (reliable across all browsers)
+  (function initGameDropdown() {
+    var btn = document.getElementById('buy-game-btn');
+    var list = document.getElementById('buy-game-list');
+    var input = document.getElementById('buy-game');
+    var label = document.getElementById('buy-game-label');
+    if (!btn || !list || !input) return;
+    list.innerHTML = '';
+    var placeholder = gameRates.length ? '— Select game —' : '— No games configured —';
+    label.textContent = placeholder;
+    if (gameRates.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'px-3 py-4 text-sm text-slate-500 text-center';
+      empty.textContent = 'No games configured. Contact admin.';
+      list.appendChild(empty);
+    }
     gameRates.forEach(function(r) {
-      var opt = document.createElement('option');
-      opt.value = r.name;
-      opt.textContent = r.name;
-      gameSelect.appendChild(opt);
+      var name = r.name || '—';
+      var el = document.createElement('div');
+      el.className = 'game-opt px-3 py-2.5 text-sm text-white border-b border-white/5 last:border-b-0';
+      el.textContent = name;
+      el.setAttribute('data-value', name);
+      el.addEventListener('click', function() {
+        input.value = name;
+        label.textContent = name;
+        list.classList.add('hidden');
+        if (typeof updateTotal === 'function') updateTotal();
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      list.appendChild(el);
     });
-  }
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      list.classList.toggle('hidden');
+      if (!list.classList.contains('hidden')) list.querySelector('.game-opt') && list.querySelector('.game-opt').scrollIntoView({ block: 'nearest' });
+    });
+    document.addEventListener('click', function(e) {
+      var wrap = document.getElementById('buy-game-wrap');
+      if (wrap && !wrap.contains(e.target)) list.classList.add('hidden');
+    });
+  })();
 
   function getSavedUsernames() {
     var txs = AgentData.getTransactions();
@@ -594,6 +629,10 @@
         document.getElementById('buy-form').reset();
         document.getElementById('buy-username-new').value = '';
         document.getElementById('buy-username-new').classList.add('hidden');
+        var gl = document.getElementById('buy-game-label');
+        if (gl) gl.textContent = gameRates.length ? '— Select game —' : '— No games configured —';
+        var glist = document.getElementById('buy-game-list');
+        if (glist) glist.classList.add('hidden');
         updateTotal();
         location.href = 'agent-order-thank-you.html';
       } else {
