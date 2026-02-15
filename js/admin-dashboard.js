@@ -753,7 +753,8 @@
       }
       listEl.innerHTML = orders.map(function(o) {
         var dt = o.time ? new Date(o.time).toLocaleString() : '—';
-        return '<div class="p-4 flex items-start justify-between gap-4 hover:bg-white/5 transition-colors"><div class="flex-1 min-w-0"><p class="text-white font-medium">' + (o.packageName || o.packageId || 'Package').replace(/</g, '&lt;') + '</p><p class="text-slate-500 text-xs mt-0.5">Agent: ' + (o.agentId || '—').replace(/</g, '&lt;') + '</p><p class="text-slate-400 text-sm mt-1">' + (o.notes || '—').replace(/</g, '&lt;') + '</p><p class="text-slate-600 text-xs mt-1">' + dt + '</p></div></div>';
+        var uiInfo = o.demoUiName ? '<p class="text-yellow-400/90 text-xs mt-0.5">UI: ' + (o.demoUiName || '').replace(/</g, '&lt;') + '</p>' : '';
+        return '<div class="p-4 flex items-start justify-between gap-4 hover:bg-white/5 transition-colors"><div class="flex-1 min-w-0"><p class="text-white font-medium">' + (o.packageName || o.packageId || 'Package').replace(/</g, '&lt;') + '</p>' + uiInfo + '<p class="text-slate-500 text-xs mt-0.5">Agent: ' + (o.agentId || '—').replace(/</g, '&lt;') + '</p><p class="text-slate-400 text-sm mt-1">' + (o.notes || '—').replace(/</g, '&lt;') + '</p><p class="text-slate-600 text-xs mt-1">' + dt + '</p></div></div>';
       }).join('');
     }
     renderPlatformOrdersList();

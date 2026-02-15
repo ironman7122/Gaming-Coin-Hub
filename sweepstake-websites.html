@@ -42,8 +42,11 @@
                 <img src="images/gaming-coinhub-logo.png" alt="Gaming Coin Hub" class="h-10 object-contain">
             </a>
             <div class="hidden md:flex items-center gap-8 text-sm font-medium" id="nav-links"></div>
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3 sm:gap-4" id="nav-auth-links">
                 <a href="admin.html" class="hidden md:block text-sm font-medium hover:text-white transition-colors">Admin</a>
+                <a href="agent-login.html" class="text-sm font-medium text-slate-400 hover:text-white transition-colors nav-guest">Login</a>
+                <a href="agent-signup.html" class="text-sm font-medium text-yellow-400 hover:text-yellow-300 transition-colors nav-guest">Sign Up</a>
+                <a href="agent-dashboard.html" class="hidden text-sm font-medium text-yellow-400 hover:text-yellow-300 transition-colors nav-agent">Agent Dashboard</a>
                 <a href="sweepstake-websites.html#pricing" class="px-4 py-2 bg-yellow-400 text-[#0E0E11] text-xs font-semibold rounded hover:bg-yellow-300 transition-all flex items-center gap-2">
                     View Packages
                     <iconify-icon icon="solar:arrow-right-linear"></iconify-icon>
@@ -73,7 +76,7 @@
             <div class="text-center mb-12">
                 <span class="text-yellow-400 text-sm font-semibold uppercase tracking-widest">Preview</span>
                 <h2 class="text-2xl md:text-4xl font-bold text-white mb-2 mt-2">Demo Platform UIs</h2>
-                <p class="text-slate-400">See what your sweepstakes platform could look like. Choose a package below to place your order.</p>
+                <p class="text-slate-400">Choose a UI style, then place your order. You must sign up and log in to purchase.</p>
             </div>
             <div id="demo-uis-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Populated by JS -->
@@ -133,6 +136,13 @@
     <script src="js/agent-data.js"></script>
     <script>
         (function() {
+            var loggedIn = typeof AgentData !== 'undefined' && AgentData.isLoggedIn && AgentData.isLoggedIn();
+            document.querySelectorAll('.nav-guest').forEach(function(el) { el.classList.toggle('hidden', !!loggedIn); });
+            document.querySelectorAll('.nav-agent').forEach(function(el) { el.classList.toggle('hidden', !loggedIn); });
+        })();
+    </script>
+    <script>
+        (function() {
             if (typeof SITE_DATA === 'undefined') return;
             var demoUis = SITE_DATA.demoUis || [];
             var packages = SITE_DATA.packages || [];
@@ -147,6 +157,9 @@
                     emptyEl.classList.add('hidden');
                     var pkgLabel = function(id) { return id ? (id.charAt(0).toUpperCase() + id.slice(1)) : ''; };
                     var safe = function(s) { return (s || '').replace(/</g, '&lt;').replace(/"/g, '&quot;'); };
+                    var orderBase = 'platform-order.html?ui=';
+                    var isLoggedIn = typeof AgentData !== 'undefined' && AgentData.isLoggedIn && AgentData.isLoggedIn();
+                    var loginReturn = 'agent-login.html?return=';
                     gridEl.innerHTML = demoUis.map(function(d, idx) {
                         var badge = d.packageId ? '<span class="absolute top-3 right-3 px-2 py-0.5 rounded text-xs font-medium bg-yellow-400/20 text-yellow-400 z-10">' + pkgLabel(d.packageId) + '</span>' : '';
                         var imgs = (d.images && d.images.length) ? d.images : ((d.imageData || d.imageUrl) ? [d.imageData || d.imageUrl] : []);
@@ -167,7 +180,11 @@
                         }
                         var imgWrap = d.demoUrl ? '<a href="' + safe(d.demoUrl) + '" target="_blank" rel="noopener" class="block">' + imgHtml + '</a>' : '<div class="block">' + imgHtml + '</div>';
                         var demoLink = d.demoUrl ? '<a href="' + safe(d.demoUrl) + '" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-yellow-400 text-sm font-medium hover:text-yellow-300"><iconify-icon icon="solar:link-square-linear"></iconify-icon> View Demo</a>' : '';
-                        return '<div class="rounded-xl border border-white/10 overflow-hidden bg-white/[0.02] hover:border-yellow-400/30 transition-all group relative">' + badge + imgWrap + '<div class="p-4"><h3 class="text-white font-semibold mb-1">' + safe(d.name) + '</h3><p class="text-slate-500 text-sm mb-3">' + safe(d.description) + '</p>' + demoLink + '</div></div>';
+                        var pkgId = d.packageId || (packages[0] && packages[0].id) || 'gold';
+                        var orderUrl = orderBase + idx + '&package=' + encodeURIComponent(pkgId);
+                        var orderHref = isLoggedIn ? orderUrl : loginReturn + encodeURIComponent(orderUrl);
+                        var orderBtn = '<a href="' + orderHref + '" class="mt-3 inline-flex items-center gap-2 px-4 py-2.5 bg-yellow-400 text-[#0E0E11] text-sm font-semibold rounded-lg hover:bg-yellow-300 transition-colors"><iconify-icon icon="solar:cart-large-2-linear"></iconify-icon> Order with this UI</a>';
+                        return '<div class="rounded-xl border border-white/10 overflow-hidden bg-white/[0.02] hover:border-yellow-400/30 transition-all group relative">' + badge + imgWrap + '<div class="p-4"><h3 class="text-white font-semibold mb-1">' + safe(d.name) + '</h3><p class="text-slate-500 text-sm mb-3">' + safe(d.description) + '</p>' + demoLink + orderBtn + '</div></div>';
                     }).join('');
                     (function initCarousels() {
                         document.querySelectorAll('.demo-carousel').forEach(function(car) {
@@ -207,8 +224,9 @@
                     return '<li class="flex items-center gap-3 text-sm ' + (isPopular ? 'text-white' : 'text-slate-300') + '"><span class="w-5 h-5 rounded-full ' + (isPopular ? 'bg-yellow-400/30' : 'bg-white/10') + ' flex items-center justify-center"><iconify-icon icon="solar:check-read-linear" class="' + checkClass + ' text-xs"></iconify-icon></span> ' + f + '</li>';
                 }).join('');
                 var btnClass = isPopular ? 'bg-yellow-400 text-[#0E0E11] font-bold hover:bg-yellow-300' : 'border border-white/20 text-white font-semibold hover:bg-white/10';
-                var orderHref = (typeof AgentData !== 'undefined' && AgentData.isLoggedIn && AgentData.isLoggedIn()) ? 'platform-order.html?package=' + encodeURIComponent(p.id || '') : 'agent-login.html?return=platform-order.html%3Fpackage%3D' + encodeURIComponent(p.id || '');
-                return '<div class="p-8 rounded-2xl ' + borderClass + ' ' + bgClass + ' relative flex flex-col ' + (isPopular ? 'md:scale-[1.02] shadow-[0_0_60px_rgba(250,204,21,0.15)]' : '') + '">' + badge + '<div class="w-10 h-10 rounded-lg ' + iconBg + ' flex items-center justify-center mb-6">' + icon + '</div><h3 class="text-xl font-bold text-white mb-2">' + p.name + '</h3><p class="text-xs ' + (isPopular ? 'text-yellow-400' : 'text-slate-500') + ' mb-6 uppercase tracking-wider">' + p.subtitle + '</p><ul class="space-y-4 mb-8 flex-grow">' + features + '</ul><a href="' + orderHref + '" class="block w-full py-4 rounded-xl ' + btnClass + ' transition-all text-center text-sm">Select ' + p.name + '</a></div>';
+                var pkgOrderUrl = 'platform-order.html?package=' + encodeURIComponent(p.id || '');
+                var pkgOrderHref = (typeof AgentData !== 'undefined' && AgentData.isLoggedIn && AgentData.isLoggedIn()) ? pkgOrderUrl : 'agent-login.html?return=' + encodeURIComponent(pkgOrderUrl);
+                return '<div class="p-8 rounded-2xl ' + borderClass + ' ' + bgClass + ' relative flex flex-col ' + (isPopular ? 'md:scale-[1.02] shadow-[0_0_60px_rgba(250,204,21,0.15)]' : '') + '">' + badge + '<div class="w-10 h-10 rounded-lg ' + iconBg + ' flex items-center justify-center mb-6">' + icon + '</div><h3 class="text-xl font-bold text-white mb-2">' + p.name + '</h3><p class="text-xs ' + (isPopular ? 'text-yellow-400' : 'text-slate-500') + ' mb-6 uppercase tracking-wider">' + p.subtitle + '</p><ul class="space-y-4 mb-8 flex-grow">' + features + '</ul><a href="' + pkgOrderHref + '" class="block w-full py-4 rounded-xl ' + btnClass + ' transition-all text-center text-sm">Select ' + p.name + '</a></div>';
             }).join('');
 
             var marketplace = SITE_DATA.marketplace || [];
